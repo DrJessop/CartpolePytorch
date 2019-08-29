@@ -88,6 +88,8 @@ class DQNAgent:
         target = self.dqn(STATE)
         for idx in range(len(target)):
             target[idx][ACTION[idx].long()] = target_values[idx]
+           
+        target = current + (target - current)
 
         loss = self.l1(current, target)
         loss.backward()
