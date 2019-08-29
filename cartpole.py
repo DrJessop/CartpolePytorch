@@ -26,7 +26,7 @@ class DQNSolver(nn.Module):
 
 class DQNAgent:
 
-    def __init__(self, state_space, action_space, max_memory_size, batch_size, gamma, lr,
+    def __init__(self, state_space, action_space, max_memory_size, batch_size, gamma, alpha, lr,
                  exploration_max, exploration_min, exploration_decay):
 
         # Define DQN Layers
@@ -43,6 +43,7 @@ class DQNAgent:
 
         # Learning parameters
         self.gamma = gamma
+        self.alpha = alpha
         self.l1 = nn.SmoothL1Loss()
         self.optimizer = torch.optim.Adam(self.dqn.parameters(), lr=lr)
 
@@ -84,12 +85,12 @@ class DQNAgent:
 
         target_values = REWARD + torch.mul(self.gamma * self.dqn(STATE2).max(1).values.unsqueeze(1), (~DONE.bool()).float())
         current = self.dqn(STATE)
-
         target = self.dqn(STATE)
+
         for idx in range(len(target)):
             target[idx][ACTION[idx].long()] = target_values[idx]
-           
-        target = current + (target - current)
+
+        target = current + self.alpha * (target - current)
 
         loss = self.l1(current, target)
         loss.backward()
@@ -109,6 +110,7 @@ def run():
                      max_memory_size=1000000,
                      batch_size=20,
                      gamma=0.95,
+                     alpha=0.99,
                      lr=0.001,
                      exploration_max=1.0,
                      exploration_min=0.01,
@@ -122,7 +124,7 @@ def run():
         steps = 0
         while True:
             steps += 1
-            env.render()
+            # env.render()
             agent.dqn.zero_grad()
             action = agent.act(state)
             state_next, reward, terminal, _ = env.step(int(action))
