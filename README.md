@@ -1,2 +1,2 @@
 # CartpolePytorch
-My DQN implementation of cartpole
+My DQN and Policy Gradient (with Baseline) implementations of cartpole
