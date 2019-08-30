@@ -68,7 +68,7 @@ class MCPolicyAgent:
             discounted_reward = self.reward_history[idx] + self.gamma * discounted_reward
             self.reward_history[idx] = discounted_reward
 
-        # self.normalize_rewards()  # Advantage
+        self.normalize_rewards()  # Advantage
         policy_gradient = torch.dot(self.policy_history, self.reward_history)
         loss = -policy_gradient
 
