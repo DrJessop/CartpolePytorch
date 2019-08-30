@@ -7,16 +7,18 @@ import random
 
 class DQNSolver(nn.Module):
 
-    def __init__(self, state_space, action_space):
+    def __init__(self, state_space, action_space, dropout):
         super(DQNSolver, self).__init__()
         self.state_space = state_space
         self.action_space = action_space
-        self.layer1 = nn.Linear(in_features=self.state_space, out_features=24)
-        self.layer2 = nn.Linear(in_features=24, out_features=24)
+        self.layer1 = nn.Linear(in_features=self.state_space, out_features=124)
+        self.layer2 = nn.Linear(in_features=124, out_features=24)
         self.layer3 = nn.Linear(in_features=24, out_features=self.action_space)
+        self.dropout = dropout
 
     def forward(self, data):
         data = self.layer1(data)
+        # data = nn.Dropout(p=self.dropout)(data)
         data = nn.ReLU()(data)
         data = self.layer2(data)
         data = nn.ReLU()(data)
@@ -27,15 +29,12 @@ class DQNSolver(nn.Module):
 class DQNAgent:
 
     def __init__(self, state_space, action_space, max_memory_size, batch_size, gamma, alpha, lr,
-                 exploration_max, exploration_min, exploration_decay):
+                 dropout, exploration_max, exploration_min, exploration_decay):
 
-        # Define DQN Layers
+        # Define DQN
         self.state_space = state_space
         self.action_space = action_space
-        self.dqn = DQNSolver(state_space, action_space)
-        self.exploration_rate = exploration_max
-        self.exploration_min = exploration_min
-        self.exploration_decay = exploration_decay
+        self.dqn = DQNSolver(state_space, action_space, dropout)
 
         # Create memory
         self.memory = deque(maxlen=max_memory_size)
@@ -46,6 +45,9 @@ class DQNAgent:
         self.alpha = alpha
         self.l1 = nn.SmoothL1Loss()
         self.optimizer = torch.optim.Adam(self.dqn.parameters(), lr=lr)
+        self.exploration_rate = exploration_max
+        self.exploration_min = exploration_min
+        self.exploration_decay = exploration_decay
 
     def remember(self, state, action, state2, reward, done):
         self.memory.append((state, action, state2, reward, done))
@@ -112,6 +114,7 @@ def run():
                      gamma=0.95,
                      alpha=0.99,
                      lr=0.001,
+                     dropout=0.25,
                      exploration_max=1.0,
                      exploration_min=0.01,
                      exploration_decay=0.995)
@@ -122,10 +125,11 @@ def run():
         state = torch.tensor([state]).float()
         total_reward = 0
         steps = 0
+        agent.dqn.zero_grad()
         while True:
             steps += 1
-            # env.render()
-            agent.dqn.zero_grad()
+            if num_episodes > 500:
+                env.render()
             action = agent.act(state)
             state_next, reward, terminal, _ = env.step(int(action))
             reward = reward if not terminal else -reward
