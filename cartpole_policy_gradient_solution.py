@@ -44,7 +44,7 @@ class MCPolicyAgent:
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=lr)
 
     def act(self, state):
-        # Choose the action with the highest probability of giving a reward
+        # Sample actions under policy θ
         probabilities = self.policy(state)
         c = Categorical(probabilities)
         action = c.sample()
