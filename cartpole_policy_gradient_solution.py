@@ -50,8 +50,8 @@ class MCPolicyAgent:
         pi_action = c.log_prob(action)
         return action, pi_action
 
-    def normalize_rewards(self, rewards):
-        return (rewards - rewards.mean()) / rewards.std()
+    def normalize_rewards(self):
+        return (self.reward_history - self.reward_history.mean()) / self.reward_history.std()
 
     def add_to_trajectory(self, probability, reward):
         self.policy_history = torch.cat((self.policy_history, probability))
@@ -60,20 +60,15 @@ class MCPolicyAgent:
     def update_policy(self):
 
         # Compute discounted reward for entire episode
-        R = 0
-        rewards = []
+        discounted_reward = 0
 
         # Discount future rewards back to the present using gamma
         for idx in range(len(self.reward_history) - 1, -1, -1):
-            r = self.reward_history[idx]
-            R = r + self.gamma * R
-            rewards.insert(0, R)
+            discounted_reward = self.reward_history[idx] + self.gamma * discounted_reward
+            self.reward_history[idx] = discounted_reward
 
-        # Scale rewards
-        rewards = torch.FloatTensor(rewards)
-
-        rewards = self.normalize_rewards(rewards)  # Advantage
-        policy_gradient = torch.dot(self.policy_history, rewards)
+        self.normalize_rewards()  # Advantage
+        policy_gradient = torch.dot(self.policy_history, self.reward_history)
         loss = -policy_gradient
 
         self.optimizer.zero_grad()
@@ -92,7 +87,7 @@ def run():
     agent = MCPolicyAgent(state_space=observation_space,
                           action_space=action_space,
                           gamma=0.99,
-                          lr=0.01,
+                          lr=0.001,
                           dropout=0.6)
 
     num_episodes = 1
