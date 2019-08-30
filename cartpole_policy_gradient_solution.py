@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 
+
 class PolicyNetwork(nn.Module):
 
     def __init__(self, state_space, action_space, dropout):
