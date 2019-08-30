@@ -21,7 +21,7 @@ class PolicyNetwork(nn.Module):
         data = self.layer2(data)
         data = nn.ReLU()(data)
         data = self.layer3(data)
-        return nn.Softmax()(data)  # This gives the log probability of picking actions
+        return nn.Softmax()(data)  # This gives the probability of picking actions
 
 
 class MCPolicyAgent:
